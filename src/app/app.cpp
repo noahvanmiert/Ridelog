@@ -1,6 +1,7 @@
 #include "app.h"
 
 #include <iostream>
+#include <cctype>
 
 #include <app/workout.h>
 
@@ -16,18 +17,37 @@ int App::getDasboardChoice()
 {
     std::cout << "-> ";
 
-    int inp;
+    std::string inp;
     std::cin.clear(); // Clear any error flags
     std::cin >> inp;
 
+    inp.erase(0, inp.find_first_not_of(' '));
+    inp.erase(inp.find_last_not_of(' ') + 1);
+
+
     if (std::cin.fail()) 
     {
-        std::cout << "  Invalid input. Please enter an integer." << std::endl;
+        std::cout << "  Please enter an option." << std::endl;
         std::cin.clear(); // Clear fail state
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard remaining characters
     }
 
-    return inp;
+    if (inp == "update")
+        return (int) DashboardChoice::UpdateFromWahoo;
+
+    if (inp == "add" || inp == "add workout")
+        return (int) DashboardChoice::ManuallyAddWorkout;
+
+    if (inp == "show" || inp == "show workout")
+        return (int) DashboardChoice::ShowWorkouts;
+
+    if (inp == "quit" || inp == "exit")
+        return (int) DashboardChoice::Quit; 
+
+    else 
+        std::cout << "  Invalid choice: `" << inp << "`";
+
+    exit(1);
 }
 
 void App::run() 
@@ -38,6 +58,8 @@ void App::run()
     std::cout << "  2. Manually add workout\n";
     std::cout << "  3. Show workouts\n";
     std::cout << "  4. Quit\n\n";
+
+    m_Workouts = Workout::getWorkoutsFromDisk();
 
     do
     {

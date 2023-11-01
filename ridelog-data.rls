@@ -1,0 +1,29 @@
+[workout]
+    m_ID : d8714b09-e8db-4708-08db-d02dd95001a
+    m_Type : 2
+    m_Duration : 0
+    m_Date : 
+    m_AvgHeartRate : 0
+    m_BurnedCalories : 0
+    m_Note : ""
+[endworkout]
+[workout]
+    m_ID : 404b7253-d703-40e8-98e0-86b16261a8a
+    m_Type : 2
+    m_Duration : 0
+    m_Date : 
+    m_AvgHeartRate : 0
+    m_BurnedCalories : 0
+    m_Note : ""
+[endworkout]
+[workout]
+    m_ID : 0e701743-c036-4988-000e-00a8728dddb
+    m_Type : 0
+    m_Duration : 0
+    m_Date : 
+    m_Distance : 0
+    m_AvgHeartRate : 0
+    m_BurnedCalories : 0
+    m_AvgRunningPace : 00:00
+    m_Note : ""
+[endworkout]

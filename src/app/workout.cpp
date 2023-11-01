@@ -5,6 +5,10 @@
 #include <iomanip>
 #include <fstream>
 #include <random>
+#include <sstream>
+
+
+#define SAVE_FILE "ridelog-data.rls"
 
 
 uuid_t Workout::genUUID()
@@ -29,13 +33,13 @@ uuid_t Workout::genUUID()
 
 Workout::Workout()
 {
-    m_Id = genUUID();
+    m_ID = genUUID();
 }
 
 
 Workout::Workout(WorkoutType type, size_t duration, std::string date)
 {
-    m_Id = genUUID();
+    m_ID = genUUID();
     m_Type = type;
     m_Duration = duration;
     m_Date = date;
@@ -191,33 +195,112 @@ void Workout::saveToDisk()
 {
     std::ofstream savefile;
 
-    savefile.open("ridelog-data.rls", std::ios_base::app);
+    savefile.open(SAVE_FILE, std::ios_base::app);
 
     savefile << "[workout]\n";
 
-    savefile << "\tm_ID : " << m_Id << "\n";
-    savefile << "\tm_Type : " << (int) m_Type << "\n";
-    savefile << "\tm_Duration : " << m_Duration << "\n";
-    savefile << "\tm_Date : " << m_Date << "\n";
+    savefile << "    m_ID : " << m_ID << "\n";
+    savefile << "    m_Type : " << (int) m_Type << "\n";
+    savefile << "    m_Duration : " << m_Duration << "\n";
+    savefile << "    m_Date : " << m_Date << "\n";
     
     if (m_Type == WorkoutType::Cycling || m_Type == WorkoutType::Running)
-        savefile << "\tm_Distance : " << m_Distance << "\n";
+        savefile << "    m_Distance : " << m_Distance << "\n";
 
-    savefile << "\tm_AvgHearRate : " << m_AvgHeartRate << "\n";
-    savefile << "\tm_Burned Calories : " << m_BurnedCalories << "\n";
+    savefile << "    m_AvgHeartRate : " << m_AvgHeartRate << "\n";
+    savefile << "    m_BurnedCalories : " << m_BurnedCalories << "\n";
 
     if (m_Type == WorkoutType::Cycling) {
-        savefile << "\tm_AvgCyclingSpeed : " << m_AvgCyclingSpeed << "\n";
-        savefile << "\tm_MaxCyclingSpeed : " << m_MaxCyclingSpeed << "\n";
+        savefile << "    m_AvgCyclingSpeed : " << m_AvgCyclingSpeed << "\n";
+        savefile << "    m_MaxCyclingSpeed : " << m_MaxCyclingSpeed << "\n";
 
-        savefile << "\tm_AvgPower : " << m_AvgPower << "\n";
-        savefile << "\tm_NormalizedPower : " << m_NormalizedPower << "\n";
-        savefile << "\tm_MaxPower : " << m_MaxPower << "\n";
+        savefile << "    m_AvgPower : " << m_AvgPower << "\n";
+        savefile << "    m_NormalizedPower : " << m_NormalizedPower << "\n";
+        savefile << "    m_MaxPower : " << m_MaxPower << "\n";
     }
 
     else if (m_Type == WorkoutType::Running) {
-        savefile << "\tm_AvgRunningPace : " << m_AvgRunningPace << "\n";
+        savefile << "    m_AvgRunningPace : " << m_AvgRunningPace << "\n";
     }
 
-    savefile << "\tm_Note : {" << m_Note << "}\n";
+    savefile << "    m_Note : \"" << m_Note << "\"\n";
+    savefile << "[endworkout]\n";
+}
+
+
+static void setValueFromString(Workout& w, std::string key, std::string value)
+{
+    if (key == "m_ID") w.m_ID = value;
+    else if (key == "m_Type") w.m_Type = (WorkoutType) std::stoi(value);
+    else if (key == "m_Duration") w.m_Duration = std::stoul(value);
+    else if (key == "m_Date") w.m_Date = value;
+    else if (key == "m_Distance") w.m_Distance = std::stof(value);
+    else if (key == "m_AvgHeartRate") w.m_AvgHeartRate = std::stoi(value);
+    else if (key == "m_BurnedCalories") w.m_BurnedCalories = std::stoi(value);
+    else if (key == "m_AvgCyclingSpeed") w.m_AvgCyclingSpeed = std::stof(value);
+    else if (key == "m_MaxCyclingSpeed") w.m_MaxCyclingSpeed = std::stof(value);
+    else if (key == "m_AvgPower") w.m_AvgPower = std::stoi(value);
+    else if (key == "m_MaxPower") w.m_MaxPower = std::stoi(value);
+    else if (key == "m_NormalizedPower") w.m_NormalizedPower = std::stoi(value);
+    else if (key == "m_AvgRunningPace") w.m_AvgRunningPace = value;
+    else if (key == "m_Note") w.m_Note = value;
+
+    else {
+        std::cerr << "ERROR: unkown key in `" << SAVE_FILE << "`: `" << key << "`" << std::endl;
+        exit(0);
+    }
+}
+
+
+std::vector<Workout> Workout::getWorkoutsFromDisk()
+{
+    std::ifstream savefile(SAVE_FILE);
+    std::string lineContent;
+
+    std::string key, value;
+    bool isInWorkout = false;
+
+    Workout currentWorkout;
+    std::vector<Workout> workouts;
+
+    while (std::getline(savefile, lineContent)) {
+        if (lineContent == "[workout]") {
+            isInWorkout = true;
+        } else if (lineContent == "[endworkout]") {
+            workouts.push_back(currentWorkout);
+            currentWorkout = Workout();
+            isInWorkout = false;
+        } else if (isInWorkout) {
+            std::stringstream ss(lineContent);
+            std::string token;
+
+            std::getline(ss, key, ':');
+            std::getline(ss, value);
+
+            key.erase(0, key.find_first_not_of(' '));
+            key.erase(key.find_last_not_of(' ') + 1);
+
+            value.erase(0, value.find_first_not_of(' '));
+            value.erase(value.find_last_not_of(' ') + 1);
+
+            // Handle m_Note field separately
+            if (key == "m_Note") {
+                // Find the position of the first and last double quotes
+                size_t start = value.find('"');
+                size_t end = value.find_last_of('"');
+
+                if (start != std::string::npos && end != std::string::npos && start < end) {
+                    // Extract the value between the double quotes
+                    value = value.substr(start + 1, end - start - 1);
+                }
+            }
+
+            setValueFromString(currentWorkout, key, value);
+        } else {
+            std::cerr << "ERROR: unkown tag in `" << SAVE_FILE << "`: `" << lineContent << "`\n";
+            exit(1);
+        }
+    }
+
+    return workouts;
 }

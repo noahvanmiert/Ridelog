@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <map>
+#include <vector>
 
 using uuid_t = std::string;
 
@@ -37,9 +38,11 @@ public:
 
     void saveToDisk();
 
+    static std::vector<Workout> getWorkoutsFromDisk();
+
 
 public:
-    uuid_t m_Id = "";
+    uuid_t m_ID = "";
     WorkoutType m_Type = WorkoutType::None;
     size_t m_Duration = 0;
     std::string m_Date = "n/a";
