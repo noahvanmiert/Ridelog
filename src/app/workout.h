@@ -37,12 +37,14 @@ public:
     std::string getStrDataIfNotMissing(const std::string& varName, size_t data);
 
     void saveToDisk();
-
     static std::vector<Workout> getWorkoutsFromDisk();
+    bool removeWorkoutFromDisk();
 
 
 public:
     uuid_t m_ID = "";
+    std::streampos m_BeginPos = 0;
+    std::streampos m_EndPos = 0;
     WorkoutType m_Type = WorkoutType::None;
     size_t m_Duration = 0;
     std::string m_Date = "n/a";

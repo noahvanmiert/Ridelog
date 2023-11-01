@@ -9,6 +9,7 @@ enum class DashboardChoice
 {
     UpdateFromWahoo = 1,
     ManuallyAddWorkout,
+    RemoveWorkout,
     ShowWorkouts,
     Quit
 };
@@ -38,6 +39,9 @@ int App::getDasboardChoice()
     if (inp == "add" || inp == "add workout")
         return (int) DashboardChoice::ManuallyAddWorkout;
 
+    if (inp == "remove" || inp == "remove workout")
+        return (int) DashboardChoice::RemoveWorkout;
+
     if (inp == "show" || inp == "show workout")
         return (int) DashboardChoice::ShowWorkouts;
 
@@ -45,9 +49,9 @@ int App::getDasboardChoice()
         return (int) DashboardChoice::Quit; 
 
     else 
-        std::cout << "  Invalid choice: `" << inp << "`";
-
-    exit(1);
+        std::cout << "  Invalid choice: `" << inp << "`\n";
+        
+    getDasboardChoice();
 }
 
 void App::run() 
@@ -56,8 +60,9 @@ void App::run()
 
     std::cout << "  1. Update from Wahoo API\n";
     std::cout << "  2. Manually add workout\n";
-    std::cout << "  3. Show workouts\n";
-    std::cout << "  4. Quit\n\n";
+    std::cout << "  3. Remove workout\n";
+    std::cout << "  4. Show workouts\n";
+    std::cout << "  5. Quit\n\n";
 
     m_Workouts = Workout::getWorkoutsFromDisk();
 
@@ -74,6 +79,11 @@ void App::run()
 
             case DashboardChoice::ManuallyAddWorkout: {
                 addWorkout();
+                break;
+            }
+
+            case DashboardChoice::RemoveWorkout: {
+                removeWorkout();
                 break;
             }
 
@@ -237,4 +247,50 @@ void App::showWorkouts()
         else 
             std::cout << "\n\n";
     }
+}
+
+
+Workout* App::getWorkoutFromList(uuid_t id)
+{
+    for (auto& w : m_Workouts) {
+        if (w.m_ID == id)
+            return &w;
+    }
+
+    return nullptr;
+}
+
+
+void App::removeWorkoutFromList(uuid_t id)
+{
+    for (auto it = m_Workouts.begin(); it != m_Workouts.end(); ++it) {
+        if (it->m_ID == id) {
+            m_Workouts.erase(it);
+            break; // Assuming IDs are unique, we can break after removing one
+        }
+    }
+}
+
+
+void App::removeWorkout() 
+{
+    std::cin.clear(); 
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Discard remaining characters
+
+    std::cout << "  Enter workout ID: ";
+    std::string id;
+    std::getline(std::cin, id);
+
+    Workout* workout = getWorkoutFromList(id);
+    removeWorkoutFromList(id);
+
+    if (!workout) {
+        std::cout << "  Could not remove workout from disk, because it doesn't exist!\n";
+        return;
+    }
+
+    if (workout->removeWorkoutFromDisk())
+        std::cout << "  Succesfully removed workout from disk!\n";
+    else
+        std::cout << "  Could not remove workout from disk!\n";
 }

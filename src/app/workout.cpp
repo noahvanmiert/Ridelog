@@ -265,8 +265,10 @@ std::vector<Workout> Workout::getWorkoutsFromDisk()
 
     while (std::getline(savefile, lineContent)) {
         if (lineContent == "[workout]") {
+            currentWorkout.m_BeginPos = savefile.tellg() - (std::streampos) 10;
             isInWorkout = true;
         } else if (lineContent == "[endworkout]") {
+            currentWorkout.m_EndPos = savefile.tellg();
             workouts.push_back(currentWorkout);
             currentWorkout = Workout();
             isInWorkout = false;
@@ -303,4 +305,22 @@ std::vector<Workout> Workout::getWorkoutsFromDisk()
     }
 
     return workouts;
+}
+
+
+bool Workout::removeWorkoutFromDisk()
+{
+    std::fstream savefile(SAVE_FILE, std::ios::in | std::ios::out);
+    savefile.seekp(m_BeginPos, std::ios::beg);
+
+    if (!savefile.is_open())
+        return false;
+
+    std::cout << "beginpos: " << m_BeginPos << "\n";
+    std::cout << "endpos: " << m_EndPos << "\n";
+
+    for (int i = 0; i < m_EndPos - m_BeginPos; i++)
+        savefile << ' ';
+
+    return true;
 }
